@@ -1,0 +1,34 @@
+version: "3"
+services:
+  publisher:
+    build:
+      context: .
+      dockerfile: Dockerfile_pub
+    environment:
+      - PUBLISHER_REDIS_ADDR=redis:6379
+    depends_on:
+      - redis
+  subscriber_even:
+    build:
+      context: .
+      dockerfile: Dockerfile_sub
+    environment:
+      - SUBSCRIBER_REDIS_ADDR=redis:6379
+      - SUBSCRIBER_CHANNEL_NAME=even_numbers
+    depends_on:
+      - redis
+  subscriber_odd:
+    build:
+      context: .
+      dockerfile: Dockerfile_sub
+    environment:
+      - SUBSCRIBER_REDIS_ADDR=redis:6379
+      - SUBSCRIBER_CHANNEL_NAME=odd_numbers
+    depends_on:
+      - redis
+  redis:
+    image: "redis:7"
+    restart: unless-stopped
+    hostname: "redis"
+    ports:
+      - "6379:6379"
