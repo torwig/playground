@@ -46,7 +46,9 @@ func main() {
 	defer cancel()
 
 	var wg sync.WaitGroup
-	wg.Add(1)
+	wg.Add(2)
+
+	go consumeFanout(ctx, &wg, conn)
 
 	go func() {
 		defer wg.Done()
@@ -86,4 +88,52 @@ func main() {
 func simulateSomeWork(n int64) {
 	t := time.Duration(int(n % 10))
 	time.Sleep(t * time.Second)
+}
+
+func consumeFanout(ctx context.Context, wg *sync.WaitGroup, conn *amqp.Connection) {
+	defer wg.Done()
+
+	ch, err := conn.Channel()
+	if err != nil {
+		log.Printf("failed to create channel for a fanout exchange")
+		return
+	}
+
+	exchangeName := "current_timestamp"
+
+	err = ch.ExchangeDeclare(exchangeName, "fanout", true, false, false, false, nil)
+	if err != nil {
+		log.Printf("failed to declare timestamp exchange")
+		return
+	}
+
+	queue, err := ch.QueueDeclare("", false, false, true, false, nil)
+	if err != nil {
+		log.Printf("failed to declare queue: %s", err)
+		return
+	}
+
+	if err := ch.QueueBind(queue.Name, "", exchangeName, false, nil); err != nil {
+		log.Printf("failed to bind a queue: %s", err)
+		return
+	}
+
+	msgCh, err := ch.Consume(queue.Name, "", true, false, false, false, nil)
+	if err != nil {
+		log.Printf("failed to start consuming messages: %s", err)
+		return
+	}
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case msg, ok := <-msgCh:
+			if !ok {
+				return
+			}
+
+			log.Printf("current timestamp: %s", string(msg.Body))
+		}
+	}
 }

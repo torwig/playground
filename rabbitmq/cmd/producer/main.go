@@ -50,12 +50,14 @@ func main() {
 	defer cancel()
 
 	var wg sync.WaitGroup
-	wg.Add(1)
+	wg.Add(2)
+
+	go runFanoutExchange(ctx, &wg, conn)
 
 	go func() {
 		defer wg.Done()
 
-		ticker := time.NewTicker(1 * time.Second)
+		ticker := time.NewTicker(5 * time.Second)
 		defer ticker.Stop()
 
 		for {
@@ -88,4 +90,46 @@ func main() {
 
 	cancel()
 	wg.Wait()
+}
+
+func runFanoutExchange(ctx context.Context, wg *sync.WaitGroup, conn *amqp.Connection) {
+	defer wg.Done()
+
+	ch, err := conn.Channel()
+	if err != nil {
+		log.Printf("failed to create channel for a fanout exchange")
+		return
+	}
+
+	exchangeName := "current_timestamp"
+
+	err = ch.ExchangeDeclare(exchangeName, "fanout", true, false, false, false, nil)
+	if err != nil {
+		log.Printf("failed to declare timestamp exchange")
+		return
+	}
+
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case t := <-ticker.C:
+			body := strconv.FormatInt(t.Unix(), 10)
+
+			p := amqp.Publishing{
+				ContentType: "plain/text",
+				Body:        []byte(body),
+			}
+
+			if err := ch.Publish(exchangeName, "", false, false, p); err != nil {
+				log.Printf("failed to publish to exchange '%s': %s", exchangeName, err)
+				return
+			}
+
+			log.Printf("published timestamp: %s", body)
+		}
+	}
 }
