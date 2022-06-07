@@ -1,0 +1,12 @@
+FROM golang:1.17 as builder
+
+RUN mkdir /rabbitmq
+COPY . /rabbitmq
+WORKDIR /rabbitmq/cmd/producer
+RUN CGO_ENABLED=0 GOOS=linux go build .
+
+FROM alpine:latest
+RUN apk --no-cache add ca-certificates
+WORKDIR /root
+COPY --from=builder /rabbitmq/cmd/producer/producer ./
+CMD ["./producer"]

@@ -1,0 +1,38 @@
+version: "3"
+services:
+  producer:
+    build:
+      context: .
+      dockerfile: Dockerfile_producer
+    environment:
+      - PRODUCER_AMQP_ADDRESS=amqp://guest:guest@rabbitmq:5672
+      - PRODUCER_QUEUE_NAME=numbers
+    depends_on:
+      - rabbitmq
+    restart: unless-stopped
+  consumer_1:
+    build:
+      context: .
+      dockerfile: Dockerfile_consumer
+    environment:
+      - CONSUMER_AMQP_ADDRESS=amqp://guest:guest@rabbitmq:5672
+      - CONSUMER_QUEUE_NAME=numbers
+    depends_on:
+      - rabbitmq
+    restart: unless-stopped
+  consumer_2:
+    build:
+      context: .
+      dockerfile: Dockerfile_consumer
+    environment:
+      - CONSUMER_AMQP_ADDRESS=amqp://guest:guest@rabbitmq:5672
+      - CONSUMER_QUEUE_NAME=numbers
+    depends_on:
+      - rabbitmq
+    restart: unless-stopped
+  rabbitmq:
+    image: "rabbitmq:3-management-alpine"
+    restart: unless-stopped
+    hostname: "rabbitmq"
+    ports:
+      - "5672:5672"
