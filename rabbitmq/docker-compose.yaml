@@ -7,6 +7,8 @@ services:
     environment:
       - PRODUCER_AMQP_ADDRESS=amqp://guest:guest@rabbitmq:5672
       - PRODUCER_QUEUE_NAME=numbers
+      - PRODUCER_EXCHANGE_NAME=timestamps
+      - PRODUCER_ROUTING_KEYS=foo,bar
     depends_on:
       - rabbitmq
     restart: unless-stopped
@@ -17,6 +19,8 @@ services:
     environment:
       - CONSUMER_AMQP_ADDRESS=amqp://guest:guest@rabbitmq:5672
       - CONSUMER_QUEUE_NAME=numbers
+      - CONSUMER_EXCHANGE_NAME=timestamps
+      - CONSUMER_ROUTING_KEY=foo
     depends_on:
       - rabbitmq
     restart: unless-stopped
@@ -27,6 +31,8 @@ services:
     environment:
       - CONSUMER_AMQP_ADDRESS=amqp://guest:guest@rabbitmq:5672
       - CONSUMER_QUEUE_NAME=numbers
+      - CONSUMER_EXCHANGE_NAME=timestamps
+      - CONSUMER_ROUTING_KEY=bar
     depends_on:
       - rabbitmq
     restart: unless-stopped

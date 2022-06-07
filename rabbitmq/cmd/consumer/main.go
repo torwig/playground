@@ -16,6 +16,8 @@ import (
 func main() {
 	amqpAddr := os.Getenv("CONSUMER_AMQP_ADDRESS")
 	queueName := os.Getenv("CONSUMER_QUEUE_NAME")
+	exchange := os.Getenv("CONSUMER_EXCHANGE_NAME")
+	key := os.Getenv("CONSUMER_ROUTING_KEY")
 
 	conn, err := amqp.Dial(amqpAddr)
 	if err != nil {
@@ -48,7 +50,7 @@ func main() {
 	var wg sync.WaitGroup
 	wg.Add(2)
 
-	go consumeFanout(ctx, &wg, conn)
+	go consumeMessagesWithRoutingKey(ctx, &wg, conn, exchange, key)
 
 	go func() {
 		defer wg.Done()
@@ -134,6 +136,51 @@ func consumeFanout(ctx context.Context, wg *sync.WaitGroup, conn *amqp.Connectio
 			}
 
 			log.Printf("current timestamp: %s", string(msg.Body))
+		}
+	}
+}
+
+func consumeMessagesWithRoutingKey(ctx context.Context, wg *sync.WaitGroup, conn *amqp.Connection, exchange string, key string) {
+	defer wg.Done()
+
+	ch, err := conn.Channel()
+	if err != nil {
+		log.Printf("failed to create channel for a routing exchange")
+		return
+	}
+
+	if err := ch.ExchangeDeclare(exchange, "direct", true, false, false, false, nil); err != nil {
+		log.Printf("failed to declare exchange: %s", err)
+		return
+	}
+
+	queue, err := ch.QueueDeclare("", false, false, true, false, nil)
+	if err != nil {
+		log.Printf("failed to declare a queue: %s", err)
+		return
+	}
+
+	if err := ch.QueueBind(queue.Name, key, exchange, false, nil); err != nil {
+		log.Printf("failed to bind a queue: %s", err)
+		return
+	}
+
+	msgCh, err := ch.Consume(queue.Name, "", true, false, false, false, nil)
+	if err != nil {
+		log.Printf("failed to start consuming messages: %s", err)
+		return
+	}
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case msg, ok := <-msgCh:
+			if !ok {
+				return
+			}
+
+			log.Printf("consumer with key '%s' received: %s", key, string(msg.Body))
 		}
 	}
 }

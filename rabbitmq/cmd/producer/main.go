@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -21,6 +22,8 @@ func init() {
 func main() {
 	amqpAddr := os.Getenv("PRODUCER_AMQP_ADDRESS")
 	queueName := os.Getenv("PRODUCER_QUEUE_NAME")
+	exchange := os.Getenv("PRODUCER_EXCHANGE_NAME")
+	keys := strings.Split(os.Getenv("PRODUCER_ROUTING_KEYS"), ",")
 
 	conn, err := amqp.Dial(amqpAddr)
 	if err != nil {
@@ -52,7 +55,7 @@ func main() {
 	var wg sync.WaitGroup
 	wg.Add(2)
 
-	go runFanoutExchange(ctx, &wg, conn)
+	go runRoutingBasedExchange(ctx, &wg, conn, exchange, keys)
 
 	go func() {
 		defer wg.Done()
@@ -132,4 +135,49 @@ func runFanoutExchange(ctx context.Context, wg *sync.WaitGroup, conn *amqp.Conne
 			log.Printf("published timestamp: %s", body)
 		}
 	}
+}
+
+func runRoutingBasedExchange(ctx context.Context, wg *sync.WaitGroup, conn *amqp.Connection, exchange string, keys []string) {
+	defer wg.Done()
+
+	ch, err := conn.Channel()
+	if err != nil {
+		log.Printf("failed to create channel for a routing exchange")
+		return
+	}
+
+	if err := ch.ExchangeDeclare(exchange, "direct", true, false, false, false, nil); err != nil {
+		log.Printf("failed to declare exchange: %s", err)
+		return
+	}
+
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case t := <-ticker.C:
+			body := strconv.FormatInt(t.Unix(), 10)
+
+			p := amqp.Publishing{
+				ContentType: "plain/text",
+				Body:        []byte(body),
+			}
+
+			key := getRandomKey(keys)
+
+			if err := ch.Publish(exchange, key, false, false, p); err != nil {
+				log.Printf("failed to publish to exchange '%s': %s", exchange, err)
+				return
+			}
+
+			log.Printf("published with routing key '%s': %s", key, body)
+		}
+	}
+}
+
+func getRandomKey(keys []string) string {
+	return keys[rand.Int()%len(keys)]
 }
