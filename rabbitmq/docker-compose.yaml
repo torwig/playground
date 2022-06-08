@@ -7,8 +7,8 @@ services:
     environment:
       - PRODUCER_AMQP_ADDRESS=amqp://guest:guest@rabbitmq:5672
       - PRODUCER_QUEUE_NAME=numbers
-      - PRODUCER_EXCHANGE_NAME=timestamps
-      - PRODUCER_ROUTING_KEYS=foo,bar
+      - PRODUCER_EXCHANGE_NAME=animal_actions
+      - PRODUCER_TOPICS=turtle,panda,dove,kangaroo,cobra
     depends_on:
       - rabbitmq
     restart: unless-stopped
@@ -19,8 +19,8 @@ services:
     environment:
       - CONSUMER_AMQP_ADDRESS=amqp://guest:guest@rabbitmq:5672
       - CONSUMER_QUEUE_NAME=numbers
-      - CONSUMER_EXCHANGE_NAME=timestamps
-      - CONSUMER_ROUTING_KEY=foo
+      - CONSUMER_EXCHANGE_NAME=animal_actions
+      - CONSUMER_TOPIC=panda.#
     depends_on:
       - rabbitmq
     restart: unless-stopped
@@ -31,8 +31,8 @@ services:
     environment:
       - CONSUMER_AMQP_ADDRESS=amqp://guest:guest@rabbitmq:5672
       - CONSUMER_QUEUE_NAME=numbers
-      - CONSUMER_EXCHANGE_NAME=timestamps
-      - CONSUMER_ROUTING_KEY=bar
+      - CONSUMER_EXCHANGE_NAME=animal_actions
+      - CONSUMER_TOPIC=kangaroo.*.turtle
     depends_on:
       - rabbitmq
     restart: unless-stopped

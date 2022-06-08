@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"math/rand"
 	"os"
@@ -23,7 +24,7 @@ func main() {
 	amqpAddr := os.Getenv("PRODUCER_AMQP_ADDRESS")
 	queueName := os.Getenv("PRODUCER_QUEUE_NAME")
 	exchange := os.Getenv("PRODUCER_EXCHANGE_NAME")
-	keys := strings.Split(os.Getenv("PRODUCER_ROUTING_KEYS"), ",")
+	topics := strings.Split(os.Getenv("PRODUCER_TOPICS"), ",")
 
 	conn, err := amqp.Dial(amqpAddr)
 	if err != nil {
@@ -55,7 +56,7 @@ func main() {
 	var wg sync.WaitGroup
 	wg.Add(2)
 
-	go runRoutingBasedExchange(ctx, &wg, conn, exchange, keys)
+	go runTopicExchange(ctx, &wg, conn, exchange, topics)
 
 	go func() {
 		defer wg.Done()
@@ -166,7 +167,7 @@ func runRoutingBasedExchange(ctx context.Context, wg *sync.WaitGroup, conn *amqp
 				Body:        []byte(body),
 			}
 
-			key := getRandomKey(keys)
+			key := getRandomString(keys)
 
 			if err := ch.Publish(exchange, key, false, false, p); err != nil {
 				log.Printf("failed to publish to exchange '%s': %s", exchange, err)
@@ -178,6 +179,48 @@ func runRoutingBasedExchange(ctx context.Context, wg *sync.WaitGroup, conn *amqp
 	}
 }
 
-func getRandomKey(keys []string) string {
-	return keys[rand.Int()%len(keys)]
+func getRandomString(elems []string) string {
+	return elems[rand.Int()%len(elems)]
+}
+
+func runTopicExchange(ctx context.Context, wg *sync.WaitGroup, conn *amqp.Connection, exchange string, topics []string) {
+	defer wg.Done()
+
+	ch, err := conn.Channel()
+	if err != nil {
+		log.Printf("failed to create channel for a topic exchange")
+		return
+	}
+
+	if err := ch.ExchangeDeclare(exchange, "topic", true, false, false, false, nil); err != nil {
+		log.Printf("failed to declare exchange: %s", err)
+		return
+	}
+
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+
+	actions := []string{"dancing", "running", "crawling", "jumping", "flying"}
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			topic := fmt.Sprintf("%s.%s.%s", getRandomString(topics), getRandomString(topics), getRandomString(topics))
+			action := getRandomString(actions)
+
+			p := amqp.Publishing{
+				ContentType: "plain/text",
+				Body:        []byte(action),
+			}
+
+			if err := ch.Publish(exchange, topic, false, false, p); err != nil {
+				log.Printf("failed to publish to exchange '%s': %s", exchange, err)
+				return
+			}
+
+			log.Printf("published with topic '%s': %s", topic, action)
+		}
+	}
 }
