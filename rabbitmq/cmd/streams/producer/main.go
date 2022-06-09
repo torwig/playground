@@ -54,13 +54,18 @@ func main() {
 	}
 	defer producer.Close()
 
+	lastID, err := producer.GetLastPublishingId()
+	if err != nil {
+		log.Fatalf("failed to get last published ID: %s", err)
+	}
+
+	startID := lastID + 1
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	var wg sync.WaitGroup
 	wg.Add(1)
-
-	startID := int64(1)
 
 	go func() {
 		defer wg.Done()
