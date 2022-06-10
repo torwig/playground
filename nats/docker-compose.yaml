@@ -1,0 +1,38 @@
+version: "3"
+services:
+  producer:
+    build:
+      context: .
+      dockerfile: Dockerfile_publisher
+    environment:
+      - PUBLISHER_NATS_ADDRESS=nats-server:4222
+      - PUBLISHER_TOKEN_LIST=turtle,panda,dove,kangaroo,cobra
+    depends_on:
+      - nats-server
+    restart: unless-stopped
+  consumer_1:
+    build:
+      context: .
+      dockerfile: Dockerfile_subscriber
+    environment:
+      - SUBSCRIBER_NATS_ADDRESS=nats-server:4222
+      - SUBSCRIBER_SUBJECT=panda.>
+    depends_on:
+      - nats-server
+    restart: unless-stopped
+  consumer_2:
+    build:
+      context: .
+      dockerfile: Dockerfile_subscriber
+    environment:
+      - SUBSCRIBER_NATS_ADDRESS=nats-server:4222
+      - SUBSCRIBER_SUBJECT=dove.*.kangaroo
+    depends_on:
+      - nats-server
+    restart: unless-stopped
+  nats-server:
+    image: "nats:alpine"
+    restart: unless-stopped
+    hostname: "nats-server"
+    ports:
+      - "4222:4222"
