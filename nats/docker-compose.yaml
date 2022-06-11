@@ -7,6 +7,7 @@ services:
     environment:
       - SENDER_NATS_ADDRESS=nats-server:4222
       - SENDER_SUBJECT=int_value
+      - SENDER_REPLY_SUBJECT=reply_value
     depends_on:
       - nats-server
     restart: unless-stopped
