@@ -1,32 +1,32 @@
 version: "3"
 services:
-  producer:
+  sender:
     build:
       context: .
-      dockerfile: Dockerfile_publisher
+      dockerfile: Dockerfile_sender
     environment:
-      - PUBLISHER_NATS_ADDRESS=nats-server:4222
-      - PUBLISHER_TOKEN_LIST=turtle,panda,dove,kangaroo,cobra
+      - SENDER_NATS_ADDRESS=nats-server:4222
+      - SENDER_SUBJECT=int_value
     depends_on:
       - nats-server
     restart: unless-stopped
-  consumer_1:
+  receiver_1:
     build:
       context: .
-      dockerfile: Dockerfile_subscriber
+      dockerfile: Dockerfile_receiver
     environment:
-      - SUBSCRIBER_NATS_ADDRESS=nats-server:4222
-      - SUBSCRIBER_SUBJECT=panda.>
+      - RECEIVER_NATS_ADDRESS=nats-server:4222
+      - RECEIVER_SUBJECT=int_value
     depends_on:
       - nats-server
     restart: unless-stopped
-  consumer_2:
+  receiver_2:
     build:
       context: .
-      dockerfile: Dockerfile_subscriber
+      dockerfile: Dockerfile_receiver
     environment:
-      - SUBSCRIBER_NATS_ADDRESS=nats-server:4222
-      - SUBSCRIBER_SUBJECT=dove.*.kangaroo
+      - RECEIVER_NATS_ADDRESS=nats-server:4222
+      - RECEIVER_SUBJECT=not-in-use
     depends_on:
       - nats-server
     restart: unless-stopped
