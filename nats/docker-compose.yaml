@@ -3,31 +3,32 @@ services:
   sender:
     build:
       context: .
-      dockerfile: Dockerfile_sender
+      dockerfile: Dockerfile_publisher
     environment:
-      - SENDER_NATS_ADDRESS=nats-server:4222
-      - SENDER_SUBJECT=int_value
-      - SENDER_REPLY_SUBJECT=reply_value
+      - PUBLISHER_NATS_ADDRESS=nats-server:4222
+      - PUBLISHER_TOKEN_LIST=eagle,worm,spider,raindeer
     depends_on:
       - nats-server
     restart: unless-stopped
   receiver_1:
     build:
       context: .
-      dockerfile: Dockerfile_receiver
+      dockerfile: Dockerfile_qgroup_subscriber
     environment:
-      - RECEIVER_NATS_ADDRESS=nats-server:4222
-      - RECEIVER_SUBJECT=int_value
+      - SUBSCRIBER_NATS_ADDRESS=nats-server:4222
+      - SUBSCRIBER_SUBJECT=spider.>
+      - SUBSCRIBER_QUEUE_GROUP=spider_busters
     depends_on:
       - nats-server
     restart: unless-stopped
   receiver_2:
     build:
       context: .
-      dockerfile: Dockerfile_receiver
+      dockerfile: Dockerfile_qgroup_subscriber
     environment:
-      - RECEIVER_NATS_ADDRESS=nats-server:4222
-      - RECEIVER_SUBJECT=not-in-use
+      - SUBSCRIBER_NATS_ADDRESS=nats-server:4222
+      - SUBSCRIBER_SUBJECT=spider.>
+      - SUBSCRIBER_QUEUE_GROUP=spider_busters
     depends_on:
       - nats-server
     restart: unless-stopped
