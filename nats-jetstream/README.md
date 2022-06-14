@@ -27,3 +27,15 @@
 `export CONSUMER_ANIMAL_NAME=raindeer`
 
 `./push`
+
+**Run pull consumer**
+
+`cd cmd/consumer/pull`
+
+`go build .`
+
+`export CONSUMER_NATS_ADDRESS=localhost:4222`
+
+`export CONSUMER_ANIMAL_NAME=spider`
+
+`./pull`

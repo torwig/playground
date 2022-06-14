@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
 	"os"
 	"os/signal"
@@ -30,7 +31,7 @@ func main() {
 
 	subject := "animals." + animal
 
-	sub, err := jsCtx.PullSubscribe(subject, "pull_consumer")
+	sub, err := jsCtx.PullSubscribe(subject, "pull_consumer", nats.StartSequence(4000))
 	if err != nil {
 		log.Printf("failed to create pull consumer: %s", err)
 		return
@@ -53,7 +54,7 @@ func main() {
 				return
 			case <-ticker.C:
 				msgs, err := sub.Fetch(10)
-				if err != nil {
+				if err != nil && !errors.Is(err, nats.ErrTimeout) {
 					log.Printf("failed to fetch messages: %s", err)
 					return
 				}
