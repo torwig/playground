@@ -38,8 +38,12 @@ func main() {
 	}
 
 	_, err = jsCtx.AddStream(&nats.StreamConfig{
-		Name:     "animals",
-		Subjects: []string{"animals.*"},
+		Name:       "animals",
+		Subjects:   []string{"animals.*"},
+		MaxMsgs:    1_000_000,
+		Duplicates: time.Minute,
+		Retention:  nats.LimitsPolicy,
+		Discard:    nats.DiscardNew,
 	})
 	if err != nil {
 		log.Printf("failed to add a stream: %s", err)

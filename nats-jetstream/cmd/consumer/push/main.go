@@ -26,7 +26,7 @@ func main() {
 	}
 
 	subject := "animals." + animal
-	sub, err := jsCtx.Subscribe(subject, handleMessage, nats.Durable("push_consumer"))
+	sub, err := jsCtx.Subscribe(subject, handleMessage, nats.Durable("push_consumer"), nats.DeliverNew())
 	if err != nil {
 		log.Printf("failed to subscribe to '%s': %s", subject, err)
 		return
