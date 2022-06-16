@@ -21,7 +21,7 @@ DIRBIN ?= $(PREFIX)/bin
 DIRINC ?= $(PREFIX)/include
 DIRLIB ?= $(PREFIX)/lib
 
-OPT=-fstrict-aliasing
+OPT=-fstrict-aliasing -fPIC
 ifeq (,$(findstring clang, $(CC)))
 OPT+=-falign-loops 
 endif
