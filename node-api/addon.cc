@@ -2,27 +2,6 @@
 #include <napi.h>
 #include "integer-compression/vint.h"
 
-Napi::Value Add(const Napi::CallbackInfo& info) {
-  Napi::Env env = info.Env();
-
-  if (info.Length() < 2) {
-    Napi::TypeError::New(env, "Wrong number of arguments")
-        .ThrowAsJavaScriptException();
-    return env.Null();
-  }
-
-  if (!info[0].IsNumber() || !info[1].IsNumber()) {
-    Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
-    return env.Null();
-  }
-
-  double arg0 = info[0].As<Napi::Number>().DoubleValue();
-  double arg1 = info[1].As<Napi::Number>().DoubleValue();
-  Napi::Number num = Napi::Number::New(env, arg0 + arg1);
-
-  return num;
-}
-
 Napi::Value StrConcat(const Napi::CallbackInfo& info) {
   Napi::Env env = info.Env();
 
@@ -44,54 +23,64 @@ Napi::Value StrConcat(const Napi::CallbackInfo& info) {
   return res;
 }
 
-Napi::Value VbzEncode(const Napi::CallbackInfo& info) {
+Napi::Value VbZEncode32(const Napi::CallbackInfo& info) {
   Napi::Env env = info.Env();
 
-  if (info.Length() != 1) {
+  if (info.Length() != 2) {
     Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
     return env.Null();
   }
 
   if (!info[0].IsTypedArray()) {
-    Napi::TypeError::New(env, "Wrong type of an argument").ThrowAsJavaScriptException();
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
     return env.Null();
   }
 
-  Napi::Uint8Array src = info[0].As<Napi::Uint8Array>();
-  for (size_t i = 0; i < src.ElementLength(); ++i) {
-    std::cout << src[i] << std::endl;
+  if (!info[1].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
   }
 
-  /*const size_t n = 400000;
-  uint64_t in[n];
-  for (size_t i = 0; i < n; ++i) {
-    in[i] = i;
+  Napi::Uint32Array src = info[0].As<Napi::Uint32Array>();
+  Napi::Uint8Array dst = info[1].As<Napi::Uint8Array>();
+
+  unsigned char *op = vbzenc32(src.Data(), src.ElementLength(), dst.Data(), 0);
+  ptrdiff_t len = op - dst.Data();
+
+  return Napi::Number::New(env, len);
+}
+
+Napi::Value VbEncode32(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 2) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
   }
 
-  unsigned char out[n];
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
 
-  unsigned char *op = vbzenc64(in, n, out, 0);
+  if (!info[1].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
 
-  ptrdiff_t l = op - out;
+  Napi::Uint32Array src = info[0].As<Napi::Uint32Array>();
+  Napi::Uint8Array dst = info[1].As<Napi::Uint8Array>();
 
-  std::cout << l << std::endl;
+  unsigned char *op = vbenc32(src.Data(), src.ElementLength(), dst.Data());
+  ptrdiff_t len = op - dst.Data();
 
-  uint64_t cpy[n];
-
-  vbzdec64(out, n, cpy, 0);
-
-  Napi::Uint8Array arr = Napi::Uint8Array::New(env, n);
-  for (size_t i = 0; i < n; ++i) {
-    arr[i] = cpy[i];
-  }*/
-
-  return env.Null();
+  return Napi::Number::New(env, len);
 }
 
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
-  exports.Set(Napi::String::New(env, "add"), Napi::Function::New(env, Add));
   exports.Set(Napi::String::New(env, "StrConcat"), Napi::Function::New(env, StrConcat));
-  exports.Set(Napi::String::New(env, "VbzEncode"), Napi::Function::New(env, VbzEncode));
+  exports.Set(Napi::String::New(env, "VbZEncode32"), Napi::Function::New(env, VbZEncode32));
+  exports.Set(Napi::String::New(env, "VbEncode32"), Napi::Function::New(env, VbEncode32));
   return exports;
 }
 
