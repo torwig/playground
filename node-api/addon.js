@@ -12,6 +12,18 @@ var dst2 = new Uint8Array(16*n)
 let s2 = addon.VbEncode32(src, dst2)
 console.log("[VbEncode32]\t encoded length is: ", s2)
 
+let check2 = new Uint32Array(n);
+let s2_d = addon.VbDecode32(dst2, n, check2);
+console.log("[VbDecode32]\t decoded bytes: ", s2_d);
+
+for (let i = 0; i < n; i++) {
+    if (src[i] != check2[i]) {
+        console.log("elements at %d not equal: %d != %d", i, src[i], check2[i]);
+    }
+}
+
+//---------------------------
+
 var dst1 = new Uint8Array(16*n)
 let s1 = addon.VbDEncode32(src, dst1)
 console.log("[VbDEncode32]\t encoded length is: ", s1)
@@ -49,8 +61,8 @@ let s10 = addon.V8ZEncode32(src, dst10)
 console.log("[V8ZEncode32]\t encoded length is: ", s10)
 
 var dst12 = new Uint8Array(16*n)
-let s12 = addon.VX8Encode32(src, dst12)
-console.log("[VX8Encode32]\t encoded length is: ", s12)
+let s12 = addon.V8XEncode32(src, dst12)
+console.log("[V8XEncode32]\t encoded length is: ", s12)
 
 var dst13 = new Uint8Array(16*n)
 let s13 = addon.V8NEncode32(src, dst13)

@@ -1,0 +1,54 @@
+version: '3'
+services:
+  producer:
+    build:
+      context: .
+      dockerfile: Dockerfile_producer
+    environment:
+      - PRODUCER_NSQD_ADDRESS=nsqd:4150
+      - PRODUCER_ANIMAL_LIST=turtle,panda,dove,kangaroo,cobra
+      - PRODUCER_ACTION_LIST=jump,run,crawl,fly,swim,climb
+    depends_on:
+      - nsqd
+    restart: unless-stopped
+  consumer1:
+    build:
+      context: .
+      dockerfile: Dockerfile_consumer
+    environment:
+      - CONSUMER_NSQLOOKUPD_ADDRESS=nsqlookupd:4161
+      - CONSUMER_TOPIC=panda
+      - CONSUMER_CHANNEL=consumer-1
+    depends_on:
+      - nsqlookupd
+  consumer2:
+    build:
+      context: .
+      dockerfile: Dockerfile_consumer
+    environment:
+      - CONSUMER_NSQLOOKUPD_ADDRESS=nsqlookupd:4161
+      - CONSUMER_TOPIC=panda
+      - CONSUMER_CHANNEL=consumer-1
+    depends_on:
+      - nsqlookupd
+  nsqlookupd:
+    image: nsqio/nsq
+    command: /nsqlookupd
+    ports:
+      - "4160"
+      - "4161"
+  nsqd:
+    image: nsqio/nsq
+    command: /nsqd --lookupd-tcp-address=nsqlookupd:4160
+    depends_on:
+      - nsqlookupd
+    ports:
+      - "4150"
+      - "4151"
+  nsqadmin:
+    image: nsqio/nsq
+    command: /nsqadmin --lookupd-http-address=nsqlookupd:4161
+    depends_on:
+      - nsqlookupd
+    ports:
+      - "4171"
