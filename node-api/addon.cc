@@ -1,6 +1,7 @@
 #include <iostream>
 #include <napi.h>
 #include "integer-compression/vint.h"
+#include "integer-compression/vsimple.h"
 
 Napi::Value StrConcat(const Napi::CallbackInfo& info) {
   Napi::Env env = info.Env();
@@ -1494,6 +1495,204 @@ Napi::Value V8NZDecode256v32(const Napi::CallbackInfo& info) {
   return Napi::Number::New(env, decoded);
 }
 
+////////// vsimple
+Napi::Value VsEncode32(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 2) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint32Array src = info[0].As<Napi::Uint32Array>();
+  Napi::Uint8Array dst = info[1].As<Napi::Uint8Array>();
+
+  unsigned char *p = vsenc32(src.Data(), src.ElementLength(), dst.Data());
+  ptrdiff_t encoded = p - dst.Data();
+
+  return Napi::Number::New(env, encoded);
+}
+
+Napi::Value VsDecode32(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 3) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsNumber()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[2].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the third argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint8Array src = info[0].As<Napi::Uint8Array>();
+  Napi::Number len = info[1].ToNumber();
+  Napi::Uint32Array dst = info[2].As<Napi::Uint32Array>();
+
+  if (len.Uint32Value() < dst.ElementLength()) {
+    Napi::TypeError::New(env, "Output array length is less than number of elements").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  unsigned char *op = vsdec32(src.Data(), len.Uint32Value(), dst.Data());
+  ptrdiff_t decoded = op - src.Data();
+
+  return Napi::Number::New(env, decoded);
+}
+
+Napi::Value VsEncode16(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 2) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint16Array src = info[0].As<Napi::Uint16Array>();
+  Napi::Uint8Array dst = info[1].As<Napi::Uint8Array>();
+
+  unsigned char *p = vsenc16(src.Data(), src.ElementLength(), dst.Data());
+  ptrdiff_t encoded = p - dst.Data();
+
+  return Napi::Number::New(env, encoded);
+}
+
+Napi::Value VsDecode16(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 3) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsNumber()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[2].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the third argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint8Array src = info[0].As<Napi::Uint8Array>();
+  Napi::Number len = info[1].ToNumber();
+  Napi::Uint16Array dst = info[2].As<Napi::Uint16Array>();
+
+  if (len.Uint32Value() < dst.ElementLength()) {
+    Napi::TypeError::New(env, "Output array length is less than number of elements").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  unsigned char *op = vsdec16(src.Data(), len.Uint32Value(), dst.Data());
+  ptrdiff_t decoded = op - src.Data();
+
+  return Napi::Number::New(env, decoded);
+}
+
+Napi::Value VsEncode8(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 2) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint8Array src = info[0].As<Napi::Uint8Array>();
+  Napi::Uint8Array dst = info[1].As<Napi::Uint8Array>();
+
+  unsigned char *p = vsenc8(src.Data(), src.ElementLength(), dst.Data());
+  ptrdiff_t encoded = p - dst.Data();
+
+  return Napi::Number::New(env, encoded);
+}
+
+Napi::Value VsDecode8(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 3) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsNumber()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[2].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the third argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint8Array src = info[0].As<Napi::Uint8Array>();
+  Napi::Number len = info[1].ToNumber();
+  Napi::Uint8Array dst = info[2].As<Napi::Uint8Array>();
+
+  if (len.Uint32Value() < dst.ElementLength()) {
+    Napi::TypeError::New(env, "Output array length is less than number of elements").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  unsigned char *op = vsdec8(src.Data(), len.Uint32Value(), dst.Data());
+  ptrdiff_t decoded = op - src.Data();
+
+  return Napi::Number::New(env, decoded);
+}
+//////////////////
+
+
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set(Napi::String::New(env, "StrConcat"), Napi::Function::New(env, StrConcat));
 
@@ -1565,6 +1764,14 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
 
   exports.Set(Napi::String::New(env, "V8NZEncode256v32"), Napi::Function::New(env, V8NZEncode256v32));
   exports.Set(Napi::String::New(env, "V8NZDecode256v32"), Napi::Function::New(env, V8NZDecode256v32));
+
+  // vsimple
+  exports.Set(Napi::String::New(env, "VsEncode32"), Napi::Function::New(env, VsEncode32));
+  exports.Set(Napi::String::New(env, "VsDecode32"), Napi::Function::New(env, VsDecode32));
+  exports.Set(Napi::String::New(env, "VsEncode16"), Napi::Function::New(env, VsEncode16));
+  exports.Set(Napi::String::New(env, "VsDecode16"), Napi::Function::New(env, VsDecode16));
+  exports.Set(Napi::String::New(env, "VsEncode8"), Napi::Function::New(env, VsEncode8));
+  exports.Set(Napi::String::New(env, "VsDecode8"), Napi::Function::New(env, VsDecode8));
 
   return exports;
 }

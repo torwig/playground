@@ -116,4 +116,9 @@ var dst25 = new Uint8Array(16*n)
 let s25 = addon.V8NZEncode256v32(src, dst25)
 console.log("[V8NZEncode256v32]\t encoded length is: ", s25)
 
+//-----------------------------
+
+let dst = new Uint8Array(16*n)
+let len = addon.VsEncode32(src, dst)
+console.log("[VsEncode32]\t\t encoded length is: ", len)
 
