@@ -1,6 +1,7 @@
 #include <iostream>
 #include <napi.h>
 #include "integer-compression/bitpack.h"
+#include "integer-compression/eliasfano.h"
 #include "integer-compression/vint.h"
 #include "integer-compression/vp4.h"
 #include "integer-compression/vsimple.h"
@@ -4195,6 +4196,267 @@ Napi::Value BitNZUnpack128v32(const Napi::CallbackInfo& info) {
   return Napi::Number::New(env, decoded);
 }
 
+/// Elias Fano
+Napi::Value EFanoEncode32(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 2) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint32Array src = info[0].As<Napi::Uint32Array>();
+  Napi::Uint8Array dst = info[1].As<Napi::Uint8Array>();
+
+  unsigned char *p = efanoenc32(src.Data(), src.ElementLength(), dst.Data(), 0);
+  ptrdiff_t encoded = p - dst.Data();
+
+  return Napi::Number::New(env, encoded);
+}
+
+Napi::Value EFanoDecode32(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 3) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsNumber()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[2].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the third argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint8Array src = info[0].As<Napi::Uint8Array>();
+  Napi::Number len = info[1].ToNumber();
+  Napi::Uint32Array dst = info[2].As<Napi::Uint32Array>();
+
+  if (static_cast<size_t>(len.Int64Value()) < dst.ElementLength()) {
+    Napi::TypeError::New(env, "Output array length is less than number of elements").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  unsigned char *p = efanodec32(src.Data(), len.Int64Value(), dst.Data(), 0);
+  ptrdiff_t decoded = p - src.Data();
+
+  return Napi::Number::New(env, decoded);
+}
+
+Napi::Value EFano1Encode32(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 2) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint32Array src = info[0].As<Napi::Uint32Array>();
+  Napi::Uint8Array dst = info[1].As<Napi::Uint8Array>();
+
+  unsigned char *p = efano1enc32(src.Data(), src.ElementLength(), dst.Data(), 0);
+  ptrdiff_t encoded = p - dst.Data();
+
+  return Napi::Number::New(env, encoded);
+}
+
+Napi::Value EFano1Decode32(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 3) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsNumber()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[2].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the third argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint8Array src = info[0].As<Napi::Uint8Array>();
+  Napi::Number len = info[1].ToNumber();
+  Napi::Uint32Array dst = info[2].As<Napi::Uint32Array>();
+
+  if (static_cast<size_t>(len.Int64Value()) < dst.ElementLength()) {
+    Napi::TypeError::New(env, "Output array length is less than number of elements").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  unsigned char *p = efano1dec32(src.Data(), len.Int64Value(), dst.Data(), 0);
+  ptrdiff_t decoded = p - src.Data();
+
+  return Napi::Number::New(env, decoded);
+}
+
+Napi::Value EFanoEncode128v32(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 2) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint32Array src = info[0].As<Napi::Uint32Array>();
+  Napi::Uint8Array dst = info[1].As<Napi::Uint8Array>();
+
+  unsigned char *p = efanoenc128v32(src.Data(), src.ElementLength(), dst.Data(), 0);
+  ptrdiff_t encoded = p - dst.Data();
+
+  return Napi::Number::New(env, encoded);
+}
+
+Napi::Value EFanoDecode128v32(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 3) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsNumber()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[2].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the third argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint8Array src = info[0].As<Napi::Uint8Array>();
+  Napi::Number len = info[1].ToNumber();
+  Napi::Uint32Array dst = info[2].As<Napi::Uint32Array>();
+
+  if (static_cast<size_t>(len.Int64Value()) < dst.ElementLength()) {
+    Napi::TypeError::New(env, "Output array length is less than number of elements").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  unsigned char *p = efanodec128v32(src.Data(), len.Int64Value(), dst.Data(), 0);
+  ptrdiff_t decoded = p - src.Data();
+
+  return Napi::Number::New(env, decoded);
+}
+
+Napi::Value EFano1Encode128v32(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 2) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint32Array src = info[0].As<Napi::Uint32Array>();
+  Napi::Uint8Array dst = info[1].As<Napi::Uint8Array>();
+
+  unsigned char *p = efano1enc128v32(src.Data(), src.ElementLength(), dst.Data(), 0);
+  ptrdiff_t encoded = p - dst.Data();
+
+  return Napi::Number::New(env, encoded);
+}
+
+Napi::Value EFano1Decode128v32(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 3) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsNumber()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[2].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the third argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint8Array src = info[0].As<Napi::Uint8Array>();
+  Napi::Number len = info[1].ToNumber();
+  Napi::Uint32Array dst = info[2].As<Napi::Uint32Array>();
+
+  if (static_cast<size_t>(len.Int64Value()) < dst.ElementLength()) {
+    Napi::TypeError::New(env, "Output array length is less than number of elements").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  unsigned char *p = efano1dec128v32(src.Data(), len.Int64Value(), dst.Data(), 0);
+  ptrdiff_t decoded = p - src.Data();
+
+  return Napi::Number::New(env, decoded);
+}
+
 /////
 
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
@@ -4364,6 +4626,15 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set(Napi::String::New(env, "BitNZUnpack128v32"), Napi::Function::New(env, BitNZUnpack128v32));
   exports.Set(Napi::String::New(env, "BitNZPack128v16"), Napi::Function::New(env, BitNZPack128v16));
   exports.Set(Napi::String::New(env, "BitNZUnpack128v16"), Napi::Function::New(env, BitNZUnpack128v16));
+
+  exports.Set(Napi::String::New(env, "EFanoEncode32"), Napi::Function::New(env, EFanoEncode32));
+  exports.Set(Napi::String::New(env, "EFanoDecode32"), Napi::Function::New(env, EFanoDecode32));
+  exports.Set(Napi::String::New(env, "EFano1Encode32"), Napi::Function::New(env, EFano1Encode32));
+  exports.Set(Napi::String::New(env, "EFano1Decode32"), Napi::Function::New(env, EFano1Decode32));
+  exports.Set(Napi::String::New(env, "EFanoEncode128v32"), Napi::Function::New(env, EFanoEncode128v32));
+  exports.Set(Napi::String::New(env, "EFanoDecode128v32"), Napi::Function::New(env, EFanoDecode128v32));
+  exports.Set(Napi::String::New(env, "EFano1Encode128v32"), Napi::Function::New(env, EFano1Encode128v32));
+  exports.Set(Napi::String::New(env, "EFano1Decode128v32"), Napi::Function::New(env, EFano1Decode128v32));
 
   return exports;
 }

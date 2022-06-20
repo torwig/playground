@@ -120,3 +120,6 @@ let dst = new Uint8Array(16*n)
 let len = addon.VsEncode32(src, dst)
 console.log("[VsEncode32]\t\t encoded length is: ", len)
 
+dst = new Uint8Array(16*n)
+len = addon.EFanoEncode32(src, dst)
+console.log("[EFanoEncode32]\t\t encoded length is: ", len)
