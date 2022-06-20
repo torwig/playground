@@ -4460,72 +4460,53 @@ Napi::Value EFano1Decode128v32(const Napi::CallbackInfo& info) {
 /////
 
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
+  // variable byte
   exports.Set(Napi::String::New(env, "VbEncode32"), Napi::Function::New(env, VbEncode32));
   exports.Set(Napi::String::New(env, "VbDecode32"), Napi::Function::New(env, VbDecode32));
-
   exports.Set(Napi::String::New(env, "VbDEncode32"), Napi::Function::New(env, VbDEncode32));
   exports.Set(Napi::String::New(env, "VbDDecode32"), Napi::Function::New(env, VbDDecode32));
-
   exports.Set(Napi::String::New(env, "VbD1Encode32"), Napi::Function::New(env, VbD1Encode32));
   exports.Set(Napi::String::New(env, "VbD1Decode32"), Napi::Function::New(env, VbD1Decode32));
-
   exports.Set(Napi::String::New(env, "VbZEncode32"), Napi::Function::New(env, VbZEncode32));
   exports.Set(Napi::String::New(env, "VbZDecode32"), Napi::Function::New(env, VbZDecode32));
-
   exports.Set(Napi::String::New(env, "VbXEncode32"), Napi::Function::New(env, VbXEncode32));
   exports.Set(Napi::String::New(env, "VbXDecode32"), Napi::Function::New(env, VbXDecode32));
-
   exports.Set(Napi::String::New(env, "VbDdEncode32"), Napi::Function::New(env, VbDdEncode32));
   exports.Set(Napi::String::New(env, "VbDdDecode32"), Napi::Function::New(env, VbDdDecode32));
 
+  // turbo byte
   exports.Set(Napi::String::New(env, "V8Encode32"), Napi::Function::New(env, V8Encode32));
   exports.Set(Napi::String::New(env, "V8Decode32"), Napi::Function::New(env, V8Decode32));
-
   exports.Set(Napi::String::New(env, "V8DEncode32"), Napi::Function::New(env, V8DEncode32));
   exports.Set(Napi::String::New(env, "V8DDecode32"), Napi::Function::New(env, V8DDecode32));
-
   exports.Set(Napi::String::New(env, "V8D1Encode32"), Napi::Function::New(env, V8D1Encode32));
   exports.Set(Napi::String::New(env, "V8D1Decode32"), Napi::Function::New(env, V8D1Decode32));
-
   exports.Set(Napi::String::New(env, "V8ZEncode32"), Napi::Function::New(env, V8ZEncode32));
   exports.Set(Napi::String::New(env, "V8ZDecode32"), Napi::Function::New(env, V8ZDecode32));
-
   exports.Set(Napi::String::New(env, "V8XEncode32"), Napi::Function::New(env, V8XEncode32));
   exports.Set(Napi::String::New(env, "V8XDecode32"), Napi::Function::New(env, V8XDecode32));
-
   exports.Set(Napi::String::New(env, "V8NEncode32"), Napi::Function::New(env, V8NEncode32));
   exports.Set(Napi::String::New(env, "V8NDecode32"), Napi::Function::New(env, V8NDecode32));
-
   exports.Set(Napi::String::New(env, "V8NDEncode32"), Napi::Function::New(env, V8NDEncode32));
   exports.Set(Napi::String::New(env, "V8NDDecode32"), Napi::Function::New(env, V8NDDecode32));
-
   exports.Set(Napi::String::New(env, "V8ND1Encode32"), Napi::Function::New(env, V8ND1Encode32));
   exports.Set(Napi::String::New(env, "V8ND1Decode32"), Napi::Function::New(env, V8ND1Decode32));
-
   exports.Set(Napi::String::New(env, "V8NZEncode32"), Napi::Function::New(env, V8NZEncode32));
   exports.Set(Napi::String::New(env, "V8NZDecode32"), Napi::Function::New(env, V8NZDecode32));
-
   exports.Set(Napi::String::New(env, "V8NEncode128v32"), Napi::Function::New(env, V8NEncode128v32));
   exports.Set(Napi::String::New(env, "V8NDecode128v32"), Napi::Function::New(env, V8NDecode128v32));
-
   exports.Set(Napi::String::New(env, "V8NDEncode128v32"), Napi::Function::New(env, V8NDEncode128v32));
   exports.Set(Napi::String::New(env, "V8NDDecode128v32"), Napi::Function::New(env, V8NDDecode128v32));
-
   exports.Set(Napi::String::New(env, "V8ND1Encode128v32"), Napi::Function::New(env, V8ND1Encode128v32));
   exports.Set(Napi::String::New(env, "V8ND1Decode128v32"), Napi::Function::New(env, V8ND1Decode128v32));
-
   exports.Set(Napi::String::New(env, "V8NZEncode128v32"), Napi::Function::New(env, V8NZEncode128v32));
   exports.Set(Napi::String::New(env, "V8NZDecode128v32"), Napi::Function::New(env, V8NZDecode128v32));
-
   exports.Set(Napi::String::New(env, "V8NEncode256v32"), Napi::Function::New(env, V8NEncode256v32));
   exports.Set(Napi::String::New(env, "V8NDecode256v32"), Napi::Function::New(env, V8NDecode256v32));
-
   exports.Set(Napi::String::New(env, "V8NDEncode256v32"), Napi::Function::New(env, V8NDEncode256v32));
   exports.Set(Napi::String::New(env, "V8NDDecode256v32"), Napi::Function::New(env, V8NDDecode256v32));
-
   exports.Set(Napi::String::New(env, "V8ND1Encode256v32"), Napi::Function::New(env, V8ND1Encode256v32));
   exports.Set(Napi::String::New(env, "V8ND1Decode256v32"), Napi::Function::New(env, V8ND1Decode256v32));
-
   exports.Set(Napi::String::New(env, "V8NZEncode256v32"), Napi::Function::New(env, V8NZEncode256v32));
   exports.Set(Napi::String::New(env, "V8NZDecode256v32"), Napi::Function::New(env, V8NZDecode256v32));
 
