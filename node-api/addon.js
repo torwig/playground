@@ -1,7 +1,5 @@
 var addon = require('bindings')('addon.node')
 
-console.log(addon.StrConcat("FoooO", "BaRr"))
-
 const n = 4*1024*1024
 var src = new Uint32Array(n)
 for (let i = 0; i < src.length; i++) {

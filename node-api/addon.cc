@@ -1,29 +1,10 @@
 #include <iostream>
 #include <napi.h>
+#include "integer-compression/bitpack.h"
 #include "integer-compression/vint.h"
-#include "integer-compression/vsimple.h"
 #include "integer-compression/vp4.h"
+#include "integer-compression/vsimple.h"
 
-Napi::Value StrConcat(const Napi::CallbackInfo& info) {
-  Napi::Env env = info.Env();
-
-  if (info.Length() < 2) {
-    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
-    return env.Null();
-  }
-
-  if (!info[0].IsString() || !info[1].IsString()) {
-    Napi::TypeError::New(env, "Wrong type of arguments").ThrowAsJavaScriptException();
-    return env.Null();
-  }
-
-  auto s1 = info[0].As<Napi::String>().ToString();
-  auto s2 = info[1].As<Napi::String>().ToString();
-
-  Napi::String res = Napi::String::New(env, std::string(s1) + std::string(s2));
-
-  return res;
-}
 
 Napi::Value VbZEncode32(const Napi::CallbackInfo& info) {
   Napi::Env env = info.Env();
@@ -2953,12 +2934,1270 @@ Napi::Value P4NZDecode128v32(const Napi::CallbackInfo& info) {
   return Napi::Number::New(env, decoded);
 }
 
+/// binary packing
+Napi::Value BitNPack32(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 2) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint32Array src = info[0].As<Napi::Uint32Array>();
+  Napi::Uint8Array dst = info[1].As<Napi::Uint8Array>();
+
+  size_t encoded = bitnpack32(src.Data(), src.ElementLength(), dst.Data());
+
+  return Napi::Number::New(env, encoded);
+}
+
+Napi::Value BitNUnpack32(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 3) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsNumber()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[2].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the third argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint8Array src = info[0].As<Napi::Uint8Array>();
+  Napi::Number len = info[1].ToNumber();
+  Napi::Uint32Array dst = info[2].As<Napi::Uint32Array>();
+
+  if (static_cast<size_t>(len.Int64Value()) < dst.ElementLength()) {
+    Napi::TypeError::New(env, "Output array length is less than number of elements").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  size_t decoded = bitnunpack32(src.Data(), len.Int64Value(), dst.Data());
+
+  return Napi::Number::New(env, decoded);
+}
+
+Napi::Value BitNPack16(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 2) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint16Array src = info[0].As<Napi::Uint16Array>();
+  Napi::Uint8Array dst = info[1].As<Napi::Uint8Array>();
+
+  size_t encoded = bitnpack16(src.Data(), src.ElementLength(), dst.Data());
+
+  return Napi::Number::New(env, encoded);
+}
+
+Napi::Value BitNUnpack16(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 3) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsNumber()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[2].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the third argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint8Array src = info[0].As<Napi::Uint8Array>();
+  Napi::Number len = info[1].ToNumber();
+  Napi::Uint16Array dst = info[2].As<Napi::Uint16Array>();
+
+  if (static_cast<size_t>(len.Int64Value()) < dst.ElementLength()) {
+    Napi::TypeError::New(env, "Output array length is less than number of elements").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  size_t decoded = bitnunpack16(src.Data(), len.Int64Value(), dst.Data());
+
+  return Napi::Number::New(env, decoded);
+}
+
+Napi::Value BitNPack8(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 2) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint8Array src = info[0].As<Napi::Uint8Array>();
+  Napi::Uint8Array dst = info[1].As<Napi::Uint8Array>();
+
+  size_t encoded = bitnpack8(src.Data(), src.ElementLength(), dst.Data());
+
+  return Napi::Number::New(env, encoded);
+}
+
+Napi::Value BitNUnpack8(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 3) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsNumber()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[2].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the third argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint8Array src = info[0].As<Napi::Uint8Array>();
+  Napi::Number len = info[1].ToNumber();
+  Napi::Uint8Array dst = info[2].As<Napi::Uint8Array>();
+
+  if (static_cast<size_t>(len.Int64Value()) < dst.ElementLength()) {
+    Napi::TypeError::New(env, "Output array length is less than number of elements").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  size_t decoded = bitnunpack8(src.Data(), len.Int64Value(), dst.Data());
+
+  return Napi::Number::New(env, decoded);
+}
+
+Napi::Value BitNPack128v16(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 2) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint16Array src = info[0].As<Napi::Uint16Array>();
+  Napi::Uint8Array dst = info[1].As<Napi::Uint8Array>();
+
+  size_t encoded = bitnpack128v16(src.Data(), src.ElementLength(), dst.Data());
+
+  return Napi::Number::New(env, encoded);
+}
+
+Napi::Value BitNUnpack128v16(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 3) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsNumber()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[2].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the third argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint8Array src = info[0].As<Napi::Uint8Array>();
+  Napi::Number len = info[1].ToNumber();
+  Napi::Uint16Array dst = info[2].As<Napi::Uint16Array>();
+
+  if (static_cast<size_t>(len.Int64Value()) < dst.ElementLength()) {
+    Napi::TypeError::New(env, "Output array length is less than number of elements").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  size_t decoded = bitnunpack128v16(src.Data(), len.Int64Value(), dst.Data());
+
+  return Napi::Number::New(env, decoded);
+}
+
+Napi::Value BitNPack128v32(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 2) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint32Array src = info[0].As<Napi::Uint32Array>();
+  Napi::Uint8Array dst = info[1].As<Napi::Uint8Array>();
+
+  size_t encoded = bitnpack128v32(src.Data(), src.ElementLength(), dst.Data());
+
+  return Napi::Number::New(env, encoded);
+}
+
+Napi::Value BitNUnpack128v32(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 3) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsNumber()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[2].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the third argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint8Array src = info[0].As<Napi::Uint8Array>();
+  Napi::Number len = info[1].ToNumber();
+  Napi::Uint32Array dst = info[2].As<Napi::Uint32Array>();
+
+  if (static_cast<size_t>(len.Int64Value()) < dst.ElementLength()) {
+    Napi::TypeError::New(env, "Output array length is less than number of elements").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  size_t decoded = bitnunpack128v32(src.Data(), len.Int64Value(), dst.Data());
+
+  return Napi::Number::New(env, decoded);
+}
+
+Napi::Value BitNDPack8(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 2) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint8Array src = info[0].As<Napi::Uint8Array>();
+  Napi::Uint8Array dst = info[1].As<Napi::Uint8Array>();
+
+  size_t encoded = bitndpack8(src.Data(), src.ElementLength(), dst.Data());
+
+  return Napi::Number::New(env, encoded);
+}
+
+Napi::Value BitNDUnpack8(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 3) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsNumber()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[2].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the third argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint8Array src = info[0].As<Napi::Uint8Array>();
+  Napi::Number len = info[1].ToNumber();
+  Napi::Uint8Array dst = info[2].As<Napi::Uint8Array>();
+
+  if (static_cast<size_t>(len.Int64Value()) < dst.ElementLength()) {
+    Napi::TypeError::New(env, "Output array length is less than number of elements").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  size_t decoded = bitndunpack8(src.Data(), len.Int64Value(), dst.Data());
+
+  return Napi::Number::New(env, decoded);
+}
+
+Napi::Value BitNDPack16(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 2) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint16Array src = info[0].As<Napi::Uint16Array>();
+  Napi::Uint8Array dst = info[1].As<Napi::Uint8Array>();
+
+  size_t encoded = bitndpack16(src.Data(), src.ElementLength(), dst.Data());
+
+  return Napi::Number::New(env, encoded);
+}
+
+Napi::Value BitNDUnpack16(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 3) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsNumber()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[2].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the third argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint8Array src = info[0].As<Napi::Uint8Array>();
+  Napi::Number len = info[1].ToNumber();
+  Napi::Uint16Array dst = info[2].As<Napi::Uint16Array>();
+
+  if (static_cast<size_t>(len.Int64Value()) < dst.ElementLength()) {
+    Napi::TypeError::New(env, "Output array length is less than number of elements").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  size_t decoded = bitndunpack16(src.Data(), len.Int64Value(), dst.Data());
+
+  return Napi::Number::New(env, decoded);
+}
+
+Napi::Value BitNDPack32(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 2) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint32Array src = info[0].As<Napi::Uint32Array>();
+  Napi::Uint8Array dst = info[1].As<Napi::Uint8Array>();
+
+  size_t encoded = bitndpack32(src.Data(), src.ElementLength(), dst.Data());
+
+  return Napi::Number::New(env, encoded);
+}
+
+Napi::Value BitNDUnpack32(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 3) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsNumber()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[2].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the third argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint8Array src = info[0].As<Napi::Uint8Array>();
+  Napi::Number len = info[1].ToNumber();
+  Napi::Uint32Array dst = info[2].As<Napi::Uint32Array>();
+
+  if (static_cast<size_t>(len.Int64Value()) < dst.ElementLength()) {
+    Napi::TypeError::New(env, "Output array length is less than number of elements").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  size_t decoded = bitndunpack32(src.Data(), len.Int64Value(), dst.Data());
+
+  return Napi::Number::New(env, decoded);
+}
+
+Napi::Value BitNDPack128v16(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 2) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint16Array src = info[0].As<Napi::Uint16Array>();
+  Napi::Uint8Array dst = info[1].As<Napi::Uint8Array>();
+
+  size_t encoded = bitndpack128v16(src.Data(), src.ElementLength(), dst.Data());
+
+  return Napi::Number::New(env, encoded);
+}
+
+Napi::Value BitNDUnpack128v16(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 3) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsNumber()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[2].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the third argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint8Array src = info[0].As<Napi::Uint8Array>();
+  Napi::Number len = info[1].ToNumber();
+  Napi::Uint16Array dst = info[2].As<Napi::Uint16Array>();
+
+  if (static_cast<size_t>(len.Int64Value()) < dst.ElementLength()) {
+    Napi::TypeError::New(env, "Output array length is less than number of elements").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  size_t decoded = bitndunpack128v16(src.Data(), len.Int64Value(), dst.Data());
+
+  return Napi::Number::New(env, decoded);
+}
+
+Napi::Value BitNDPack128v32(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 2) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint32Array src = info[0].As<Napi::Uint32Array>();
+  Napi::Uint8Array dst = info[1].As<Napi::Uint8Array>();
+
+  size_t encoded = bitndpack128v32(src.Data(), src.ElementLength(), dst.Data());
+
+  return Napi::Number::New(env, encoded);
+}
+
+Napi::Value BitNDUnpack128v32(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 3) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsNumber()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[2].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the third argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint8Array src = info[0].As<Napi::Uint8Array>();
+  Napi::Number len = info[1].ToNumber();
+  Napi::Uint32Array dst = info[2].As<Napi::Uint32Array>();
+
+  if (static_cast<size_t>(len.Int64Value()) < dst.ElementLength()) {
+    Napi::TypeError::New(env, "Output array length is less than number of elements").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  size_t decoded = bitndunpack128v32(src.Data(), len.Int64Value(), dst.Data());
+
+  return Napi::Number::New(env, decoded);
+}
+
+Napi::Value BitND1Pack8(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 2) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint8Array src = info[0].As<Napi::Uint8Array>();
+  Napi::Uint8Array dst = info[1].As<Napi::Uint8Array>();
+
+  size_t encoded = bitnd1pack8(src.Data(), src.ElementLength(), dst.Data());
+
+  return Napi::Number::New(env, encoded);
+}
+
+Napi::Value BitND1Unpack8(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 3) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsNumber()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[2].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the third argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint8Array src = info[0].As<Napi::Uint8Array>();
+  Napi::Number len = info[1].ToNumber();
+  Napi::Uint8Array dst = info[2].As<Napi::Uint8Array>();
+
+  if (static_cast<size_t>(len.Int64Value()) < dst.ElementLength()) {
+    Napi::TypeError::New(env, "Output array length is less than number of elements").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  size_t decoded = bitnd1unpack8(src.Data(), len.Int64Value(), dst.Data());
+
+  return Napi::Number::New(env, decoded);
+}
+
+Napi::Value BitND1Pack16(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 2) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint16Array src = info[0].As<Napi::Uint16Array>();
+  Napi::Uint8Array dst = info[1].As<Napi::Uint8Array>();
+
+  size_t encoded = bitnd1pack16(src.Data(), src.ElementLength(), dst.Data());
+
+  return Napi::Number::New(env, encoded);
+}
+
+Napi::Value BitND1Unpack16(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 3) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsNumber()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[2].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the third argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint8Array src = info[0].As<Napi::Uint8Array>();
+  Napi::Number len = info[1].ToNumber();
+  Napi::Uint16Array dst = info[2].As<Napi::Uint16Array>();
+
+  if (static_cast<size_t>(len.Int64Value()) < dst.ElementLength()) {
+    Napi::TypeError::New(env, "Output array length is less than number of elements").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  size_t decoded = bitnd1unpack16(src.Data(), len.Int64Value(), dst.Data());
+
+  return Napi::Number::New(env, decoded);
+}
+
+Napi::Value BitND1Pack32(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 2) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint32Array src = info[0].As<Napi::Uint32Array>();
+  Napi::Uint8Array dst = info[1].As<Napi::Uint8Array>();
+
+  size_t encoded = bitnd1pack32(src.Data(), src.ElementLength(), dst.Data());
+
+  return Napi::Number::New(env, encoded);
+}
+
+Napi::Value BitND1Unpack32(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 3) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsNumber()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[2].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the third argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint8Array src = info[0].As<Napi::Uint8Array>();
+  Napi::Number len = info[1].ToNumber();
+  Napi::Uint32Array dst = info[2].As<Napi::Uint32Array>();
+
+  if (static_cast<size_t>(len.Int64Value()) < dst.ElementLength()) {
+    Napi::TypeError::New(env, "Output array length is less than number of elements").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  size_t decoded = bitnd1unpack32(src.Data(), len.Int64Value(), dst.Data());
+
+  return Napi::Number::New(env, decoded);
+}
+
+Napi::Value BitND1Pack128v16(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 2) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint16Array src = info[0].As<Napi::Uint16Array>();
+  Napi::Uint8Array dst = info[1].As<Napi::Uint8Array>();
+
+  size_t encoded = bitnd1pack128v16(src.Data(), src.ElementLength(), dst.Data());
+
+  return Napi::Number::New(env, encoded);
+}
+
+Napi::Value BitND1Unpack128v16(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 3) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsNumber()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[2].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the third argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint8Array src = info[0].As<Napi::Uint8Array>();
+  Napi::Number len = info[1].ToNumber();
+  Napi::Uint16Array dst = info[2].As<Napi::Uint16Array>();
+
+  if (static_cast<size_t>(len.Int64Value()) < dst.ElementLength()) {
+    Napi::TypeError::New(env, "Output array length is less than number of elements").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  size_t decoded = bitnd1unpack128v16(src.Data(), len.Int64Value(), dst.Data());
+
+  return Napi::Number::New(env, decoded);
+}
+
+Napi::Value BitND1Pack128v32(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 2) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint32Array src = info[0].As<Napi::Uint32Array>();
+  Napi::Uint8Array dst = info[1].As<Napi::Uint8Array>();
+
+  size_t encoded = bitnd1pack128v32(src.Data(), src.ElementLength(), dst.Data());
+
+  return Napi::Number::New(env, encoded);
+}
+
+Napi::Value BitND1Unpack128v32(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 3) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsNumber()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[2].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the third argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint8Array src = info[0].As<Napi::Uint8Array>();
+  Napi::Number len = info[1].ToNumber();
+  Napi::Uint32Array dst = info[2].As<Napi::Uint32Array>();
+
+  if (static_cast<size_t>(len.Int64Value()) < dst.ElementLength()) {
+    Napi::TypeError::New(env, "Output array length is less than number of elements").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  size_t decoded = bitnd1unpack128v32(src.Data(), len.Int64Value(), dst.Data());
+
+  return Napi::Number::New(env, decoded);
+}
+
+Napi::Value BitNZPack8(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 2) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint8Array src = info[0].As<Napi::Uint8Array>();
+  Napi::Uint8Array dst = info[1].As<Napi::Uint8Array>();
+
+  size_t encoded = bitnzpack8(src.Data(), src.ElementLength(), dst.Data());
+
+  return Napi::Number::New(env, encoded);
+}
+
+Napi::Value BitNZUnpack8(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 3) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsNumber()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[2].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the third argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint8Array src = info[0].As<Napi::Uint8Array>();
+  Napi::Number len = info[1].ToNumber();
+  Napi::Uint8Array dst = info[2].As<Napi::Uint8Array>();
+
+  if (static_cast<size_t>(len.Int64Value()) < dst.ElementLength()) {
+    Napi::TypeError::New(env, "Output array length is less than number of elements").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  size_t decoded = bitnzunpack8(src.Data(), len.Int64Value(), dst.Data());
+
+  return Napi::Number::New(env, decoded);
+}
+
+Napi::Value BitNZPack16(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 2) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint16Array src = info[0].As<Napi::Uint16Array>();
+  Napi::Uint8Array dst = info[1].As<Napi::Uint8Array>();
+
+  size_t encoded = bitnzpack16(src.Data(), src.ElementLength(), dst.Data());
+
+  return Napi::Number::New(env, encoded);
+}
+
+Napi::Value BitNZUnpack16(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 3) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsNumber()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[2].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the third argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint8Array src = info[0].As<Napi::Uint8Array>();
+  Napi::Number len = info[1].ToNumber();
+  Napi::Uint16Array dst = info[2].As<Napi::Uint16Array>();
+
+  if (static_cast<size_t>(len.Int64Value()) < dst.ElementLength()) {
+    Napi::TypeError::New(env, "Output array length is less than number of elements").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  size_t decoded = bitnzunpack16(src.Data(), len.Int64Value(), dst.Data());
+
+  return Napi::Number::New(env, decoded);
+}
+
+Napi::Value BitNZPack32(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 2) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint32Array src = info[0].As<Napi::Uint32Array>();
+  Napi::Uint8Array dst = info[1].As<Napi::Uint8Array>();
+
+  size_t encoded = bitnzpack32(src.Data(), src.ElementLength(), dst.Data());
+
+  return Napi::Number::New(env, encoded);
+}
+
+Napi::Value BitNZUnpack32(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 3) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsNumber()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[2].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the third argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint8Array src = info[0].As<Napi::Uint8Array>();
+  Napi::Number len = info[1].ToNumber();
+  Napi::Uint32Array dst = info[2].As<Napi::Uint32Array>();
+
+  if (static_cast<size_t>(len.Int64Value()) < dst.ElementLength()) {
+    Napi::TypeError::New(env, "Output array length is less than number of elements").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  size_t decoded = bitnzunpack32(src.Data(), len.Int64Value(), dst.Data());
+
+  return Napi::Number::New(env, decoded);
+}
+
+Napi::Value BitNZPack128v16(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 2) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint16Array src = info[0].As<Napi::Uint16Array>();
+  Napi::Uint8Array dst = info[1].As<Napi::Uint8Array>();
+
+  size_t encoded = bitnzpack128v16(src.Data(), src.ElementLength(), dst.Data());
+
+  return Napi::Number::New(env, encoded);
+}
+
+Napi::Value BitNZUnpack128v16(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 3) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsNumber()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[2].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the third argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint8Array src = info[0].As<Napi::Uint8Array>();
+  Napi::Number len = info[1].ToNumber();
+  Napi::Uint16Array dst = info[2].As<Napi::Uint16Array>();
+
+  if (static_cast<size_t>(len.Int64Value()) < dst.ElementLength()) {
+    Napi::TypeError::New(env, "Output array length is less than number of elements").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  size_t decoded = bitnzunpack128v16(src.Data(), len.Int64Value(), dst.Data());
+
+  return Napi::Number::New(env, decoded);
+}
+
+Napi::Value BitNZPack128v32(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 2) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint32Array src = info[0].As<Napi::Uint32Array>();
+  Napi::Uint8Array dst = info[1].As<Napi::Uint8Array>();
+
+  size_t encoded = bitnzpack128v32(src.Data(), src.ElementLength(), dst.Data());
+
+  return Napi::Number::New(env, encoded);
+}
+
+Napi::Value BitNZUnpack128v32(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() != 3) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[0].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[1].IsNumber()) {
+    Napi::TypeError::New(env, "Wrong type of the second argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!info[2].IsTypedArray()) {
+    Napi::TypeError::New(env, "Wrong type of the third argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Uint8Array src = info[0].As<Napi::Uint8Array>();
+  Napi::Number len = info[1].ToNumber();
+  Napi::Uint32Array dst = info[2].As<Napi::Uint32Array>();
+
+  if (static_cast<size_t>(len.Int64Value()) < dst.ElementLength()) {
+    Napi::TypeError::New(env, "Output array length is less than number of elements").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  size_t decoded = bitnzunpack128v32(src.Data(), len.Int64Value(), dst.Data());
+
+  return Napi::Number::New(env, decoded);
+}
 
 /////
 
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
-  exports.Set(Napi::String::New(env, "StrConcat"), Napi::Function::New(env, StrConcat));
-
   exports.Set(Napi::String::New(env, "VbEncode32"), Napi::Function::New(env, VbEncode32));
   exports.Set(Napi::String::New(env, "VbDecode32"), Napi::Function::New(env, VbDecode32));
 
@@ -3080,6 +4319,51 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set(Napi::String::New(env, "P4NZDecode128v32"), Napi::Function::New(env, P4NZDecode128v32));
   exports.Set(Napi::String::New(env, "P4NZEncode128v16"), Napi::Function::New(env, P4NZEncode128v16));
   exports.Set(Napi::String::New(env, "P4NZDecode128v16"), Napi::Function::New(env, P4NZDecode128v16));
+
+  // bit packing
+  exports.Set(Napi::String::New(env, "BitNPack32"), Napi::Function::New(env, BitNPack32));
+  exports.Set(Napi::String::New(env, "BitNUnpack32"), Napi::Function::New(env, BitNUnpack32));
+  exports.Set(Napi::String::New(env, "BitNPack16"), Napi::Function::New(env, BitNPack16));
+  exports.Set(Napi::String::New(env, "BitNUnpack16"), Napi::Function::New(env, BitNUnpack16));
+  exports.Set(Napi::String::New(env, "BitNPack8"), Napi::Function::New(env, BitNPack8));
+  exports.Set(Napi::String::New(env, "BitNUnpack8"), Napi::Function::New(env, BitNUnpack8));
+  exports.Set(Napi::String::New(env, "BitNPack128v32"), Napi::Function::New(env, BitNPack128v32));
+  exports.Set(Napi::String::New(env, "BitNUnpack128v32"), Napi::Function::New(env, BitNUnpack128v32));
+  exports.Set(Napi::String::New(env, "BitNPack128v16"), Napi::Function::New(env, BitNPack128v16));
+  exports.Set(Napi::String::New(env, "BitNUnpack128v16"), Napi::Function::New(env, BitNUnpack128v16));
+
+  exports.Set(Napi::String::New(env, "BitNDPack32"), Napi::Function::New(env, BitNDPack32));
+  exports.Set(Napi::String::New(env, "BitNDUnpack32"), Napi::Function::New(env, BitNDUnpack32));
+  exports.Set(Napi::String::New(env, "BitNDPack16"), Napi::Function::New(env, BitNDPack16));
+  exports.Set(Napi::String::New(env, "BitNDUnpack16"), Napi::Function::New(env, BitNDUnpack16));
+  exports.Set(Napi::String::New(env, "BitNDPack8"), Napi::Function::New(env, BitNDPack8));
+  exports.Set(Napi::String::New(env, "BitNDUnpack8"), Napi::Function::New(env, BitNDUnpack8));
+  exports.Set(Napi::String::New(env, "BitNDPack128v32"), Napi::Function::New(env, BitNDPack128v32));
+  exports.Set(Napi::String::New(env, "BitNDUnpack128v32"), Napi::Function::New(env, BitNDUnpack128v32));
+  exports.Set(Napi::String::New(env, "BitNDPack128v16"), Napi::Function::New(env, BitNDPack128v16));
+  exports.Set(Napi::String::New(env, "BitNDUnpack128v16"), Napi::Function::New(env, BitNDUnpack128v16));
+
+  exports.Set(Napi::String::New(env, "BitND1Pack32"), Napi::Function::New(env, BitND1Pack32));
+  exports.Set(Napi::String::New(env, "BitND1Unpack32"), Napi::Function::New(env, BitND1Unpack32));
+  exports.Set(Napi::String::New(env, "BitND1Pack16"), Napi::Function::New(env, BitND1Pack16));
+  exports.Set(Napi::String::New(env, "BitND1Unpack16"), Napi::Function::New(env, BitND1Unpack16));
+  exports.Set(Napi::String::New(env, "BitND1Pack8"), Napi::Function::New(env, BitND1Pack8));
+  exports.Set(Napi::String::New(env, "BitND1Unpack8"), Napi::Function::New(env, BitND1Unpack8));
+  exports.Set(Napi::String::New(env, "BitND1Pack128v32"), Napi::Function::New(env, BitND1Pack128v32));
+  exports.Set(Napi::String::New(env, "BitND1Unpack128v32"), Napi::Function::New(env, BitND1Unpack128v32));
+  exports.Set(Napi::String::New(env, "BitND1Pack128v16"), Napi::Function::New(env, BitND1Pack128v16));
+  exports.Set(Napi::String::New(env, "BitND1Unpack128v16"), Napi::Function::New(env, BitND1Unpack128v16));
+
+  exports.Set(Napi::String::New(env, "BitNZPack32"), Napi::Function::New(env, BitNZPack32));
+  exports.Set(Napi::String::New(env, "BitNZUnpack32"), Napi::Function::New(env, BitNZUnpack32));
+  exports.Set(Napi::String::New(env, "BitNZPack16"), Napi::Function::New(env, BitNZPack16));
+  exports.Set(Napi::String::New(env, "BitNZUnpack16"), Napi::Function::New(env, BitNZUnpack16));
+  exports.Set(Napi::String::New(env, "BitNZPack8"), Napi::Function::New(env, BitNZPack8));
+  exports.Set(Napi::String::New(env, "BitNZUnpack8"), Napi::Function::New(env, BitNZUnpack8));
+  exports.Set(Napi::String::New(env, "BitNZPack128v32"), Napi::Function::New(env, BitNZPack128v32));
+  exports.Set(Napi::String::New(env, "BitNZUnpack128v32"), Napi::Function::New(env, BitNZUnpack128v32));
+  exports.Set(Napi::String::New(env, "BitNZPack128v16"), Napi::Function::New(env, BitNZPack128v16));
+  exports.Set(Napi::String::New(env, "BitNZUnpack128v16"), Napi::Function::New(env, BitNZUnpack128v16));
 
   return exports;
 }
