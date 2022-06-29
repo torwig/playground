@@ -61,9 +61,9 @@ func main() {
 func createKafkaConfig() (kafka.ConfigMap, error) {
 	m := make(map[string]kafka.ConfigValue)
 
-	m["acks"] = "all"
 	m["group.id"] = os.Getenv("CONSUMER_GROUP_ID")
 	m["bootstrap.servers"] = os.Getenv("CONSUMER_KAFKA_ADDRESS")
+	m["auto.offset.reset"] = "earliest"
 
 	return m, nil
 }
