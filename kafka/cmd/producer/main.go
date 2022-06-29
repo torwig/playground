@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -20,6 +21,19 @@ func main() {
 	actionList := os.Getenv("PRODUCER_ACTION_LIST")
 	actions := strings.Split(actionList, ",")
 	topic := os.Getenv("PRODUCER_TOPIC_NAME")
+	partitionStr := os.Getenv("PRODUCER_PARTITION")
+
+	var partition int32
+	if len(partitionStr) == 0 {
+		partition = kafka.PartitionAny
+	} else {
+		v, err := strconv.ParseInt(partitionStr, 10, 32)
+		if err != nil {
+			log.Fatalf("invalid partition number: %s", err)
+		}
+
+		partition = int32(v)
+	}
 
 	cfg, err := createKafkaConfig()
 	if err != nil {
@@ -51,7 +65,7 @@ func main() {
 				action := actions[rand.Intn(len(actions))]
 
 				err := producer.Produce(&kafka.Message{
-					TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+					TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: partition},
 					Key:            []byte(animal),
 					Value:          []byte(action),
 				}, nil)
