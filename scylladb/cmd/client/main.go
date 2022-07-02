@@ -30,27 +30,30 @@ func main() {
 	}
 	defer session.Close()
 
-	usersTable := table.New(usersTableMetadata)
+	messages := table.New(channelMessages)
 
-	var users []User
-	q := session.Query(usersTable.Select())
-	if err := q.SelectRelease(&users); err != nil {
+	var chMsgs []ChannelMessage
+	q := session.Query(messages.Select())
+	if err := q.SelectRelease(&chMsgs); err != nil {
 		log.Printf("failed to make a query: %s", err)
 		return
 	}
 
-	for _, u := range users {
-		log.Printf("found user in database: %v", u)
+	for _, u := range chMsgs {
+		log.Printf("found message in the database: %v", u)
 	}
 }
 
-var usersTableMetadata = table.Metadata{
-	Name:    "users",
-	Columns: []string{"user_id", "fname", "lname"},
+var channelMessages = table.Metadata{
+	Name:    "channel_messages",
+	Columns: []string{"message_id", "sender_id", "channel_name", "body", "created_at"},
 }
 
-type User struct {
-	ID        int64  `db:"user_id"`
-	FirstName string `db:"fname"`
-	LastName  string `db:"lname"`
+type ChannelMessage struct {
+	MessageID   string `db:"message_id"`
+	SenderID    int64  `db:"sender_id"`
+	ChannelName string `db:"channel_name"`
+	Body        string `db:"body"`
+	CreatedAt   int64  `db:"created_at"`
+	Date        string `db:"date"`
 }
