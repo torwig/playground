@@ -4,7 +4,10 @@ import (
 	"context"
 	"log"
 	"os"
+	"os/signal"
 	"strconv"
+	"sync"
+	"syscall"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -30,20 +33,37 @@ func main() {
 
 	start := time.Now()
 
-	for i := 0; i < 1_000_000; i++ {
-		res, err := rdb.XAdd(context.Background(), &redis.XAddArgs{
-			Stream: "test-stream",
-			ID:     "*",
-			Values: []string{"timestamp_1", strconv.FormatInt(time.Now().Unix(), 10),
-				"timestamp_2", strconv.FormatInt(time.Now().Unix(), 10)},
-		}).Result()
-		if err != nil {
-			log.Printf("failed to add entry to the stream: %s", err)
-			return
-		}
+	sigint := make(chan os.Signal, 10)
+	signal.Notify(sigint, syscall.SIGINT, syscall.SIGTERM)
 
-		log.Printf("added: %s", res)
-	}
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	go func() {
+		defer wg.Done()
+
+		for {
+			select {
+			case <-sigint:
+				return
+			default:
+				res, err := rdb.XAdd(context.Background(), &redis.XAddArgs{
+					Stream: "new-test-stream",
+					ID:     "*",
+					Values: []string{"timestamp_1", strconv.FormatInt(time.Now().Unix(), 10),
+						"timestamp_2", strconv.FormatInt(time.Now().Unix(), 10)},
+				}).Result()
+				if err != nil {
+					log.Printf("failed to add entry to the stream: %s", err)
+					return
+				}
+
+				log.Printf("added: %s", res)
+			}
+		}
+	}()
+
+	wg.Wait()
 
 	log.Printf("done in %f seconds", time.Since(start).Seconds())
 }
